@@ -23,4 +23,4 @@ def naive_keyword_search(query: str, documents: list[str], top_k=2) -> list[str]
 
     scored.sort(key=lambda item: item["score"], reverse=True)
 
-    return [item["doc"] for item in scored if item["score"] > 0]
+    return [item["doc"] for item in scored[:top_k] if item["score"] > 0]
