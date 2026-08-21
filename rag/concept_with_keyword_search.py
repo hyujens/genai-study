@@ -9,7 +9,9 @@ knowledge = [
 
 
 def naive_keyword_search(query: str, documents: list[str], top_k=2) -> list[str]:
-    words_in_query: list[str] = query.lower().split()
+    # remove common words since they are not what we want during retrieval
+    stop_words = {"a", "an", "the", "is", "are", "what", "who"}
+    words_in_query = [w for w in query.lower().split() if w not in stop_words]
 
     scored: list[dict] = []
     for doc in documents:
