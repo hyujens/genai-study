@@ -8,7 +8,7 @@ knowledge = [
 ]
 
 
-def naive_keyword_search(query: str, documents: list[str], top_k=2):
+def naive_keyword_search(query: str, documents: list[str], top_k=2) -> list[str]:
     words_in_query: list[str] = query.lower().split()
 
     scored: list[dict] = []
