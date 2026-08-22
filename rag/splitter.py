@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Sized
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from .dataloader.data import Document
@@ -14,7 +14,7 @@ class SplitConfig:
     # How much content to repeat between chunks
     chunk_overlap: int = 200
     # How to measure text length
-    length_func: Callable[[Sized], int] = lambda t: len(t)
+    length_func: Callable[[str], int] = lambda text: len(text)
     # Whether to include separators in chunks
     keep_separator: bool = False
 
