@@ -1,7 +1,13 @@
 import pytest
 
 from rag.dataloader.data import Document
-from rag.splitter import SplitConfig, TextSplitter
+from rag.splitter import (
+    CharacterTextSplitter,
+    RecursiveCharacterTextSplitter,
+    SplitConfig,
+    TextSplitter,
+    TokenTextSplitter,
+)
 
 
 class PipeTextSplitter(TextSplitter):
@@ -67,3 +73,41 @@ def test_merge_splits_excludes_empty_chunks():
     splitter = PipeTextSplitter(SplitConfig(chunk_size=7, chunk_overlap=3))
 
     assert splitter.merge_splits(["", ""], " ") == []
+
+
+def test_character_text_splitter_uses_separator_and_overlap():
+    splitter = CharacterTextSplitter(
+        SplitConfig(chunk_size=7, chunk_overlap=3), separator="|"
+    )
+
+    assert splitter.split_text("aaa|bbb|ccc") == ["aaa|bbb", "bbb|ccc"]
+
+
+def test_recursive_character_text_splitter_preserves_oversized_splits():
+    splitter = RecursiveCharacterTextSplitter(
+        SplitConfig(chunk_size=5, chunk_overlap=0),
+        separators=("|", " ", ""),
+    )
+
+    chunks = splitter.split_text("ok|this is oversized|end")
+
+    assert chunks == ["ok", "this", "is", "overs", "ized", "end"]
+
+
+def test_recursive_character_text_splitter_falls_back_to_characters():
+    splitter = RecursiveCharacterTextSplitter(
+        SplitConfig(chunk_size=4, chunk_overlap=0)
+    )
+
+    assert splitter.split_text("abcdefghij") == ["abcd", "efgh", "ij"]
+
+
+def test_token_text_splitter_uses_approximate_token_length():
+    splitter = TokenTextSplitter(
+        encoding_name="cl100k_base",
+        chunk_size=2,
+        chunk_overlap=0,
+    )
+
+    assert splitter.config.length_func("12345") == 2
+    assert splitter.split_text("abcdefghij") == ["ab", "cd", "ef", "gh", "ij"]

@@ -1,3 +1,4 @@
+import math
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -97,3 +98,82 @@ class TextSplitter(ABC):
             chunks.append(self.join_splits(candidate_splits_for_chunk, separator))
 
         return [chunk for chunk in chunks if chunk]
+
+
+class CharacterTextSplitter(TextSplitter):
+    def __init__(self, config: SplitConfig, separator="\n\n") -> None:
+        self.separator = separator
+        super().__init__(config)
+
+    def split_text(self, text: str) -> list[str]:
+        splits = [
+            splitted for splitted in text.split(self.separator) if splitted.strip()
+        ]
+        return self.merge_splits(splits, self.separator)
+
+
+class RecursiveCharacterTextSplitter(TextSplitter):
+    def __init__(
+        self, config: SplitConfig, separators=("\n\n", "\n", ". ", " ", "")
+    ) -> None:
+        self.separators = list(separators)
+        super().__init__(config)
+
+    def split_text(self, text: str) -> list[str]:
+        chunks: list[str] = []
+        separator = self.separators[-1]
+        available_separator_candidates: list[str] = []
+
+        for idx, sep in enumerate(self.separators):
+            if sep in text:
+                separator = sep
+                available_separator_candidates = self.separators[idx + 1 :]
+                break
+
+        splits = (
+            list(text)
+            if separator == ""
+            else [split for split in text.split(separator) if split]
+        )
+        candidates_for_chunk: list[str] = []
+        for split in splits:
+            if self.config.length_func(split) <= self.config.chunk_size:
+                candidates_for_chunk.append(split)
+                continue
+
+            if candidates_for_chunk:
+                chunks.extend(self.merge_splits(candidates_for_chunk, separator))
+                candidates_for_chunk.clear()
+
+            if not available_separator_candidates:
+                chunks.append(split)
+                continue
+
+            splitter = RecursiveCharacterTextSplitter(
+                self.config, available_separator_candidates
+            )
+            chunks.extend(splitter.split_text(split))
+
+        if candidates_for_chunk:
+            chunks.extend(self.merge_splits(candidates_for_chunk, separator))
+
+        return chunks
+
+
+class TokenTextSplitter(TextSplitter):
+    def __init__(self, encoding_name: str, chunk_size: int = 1000, chunk_overlap=200):
+        self.encoding_name = encoding_name
+        super().__init__(
+            SplitConfig(
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+                length_func=lambda text: math.ceil(len(text) / 4),
+            )
+        )
+
+    def split_text(self, text: str) -> list[str]:
+        splitter = RecursiveCharacterTextSplitter(
+            self.config, separators=["\n\n", "\n", ". ", " ", ""]
+        )
+
+        return splitter.split_text(text)
