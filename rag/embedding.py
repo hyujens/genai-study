@@ -22,6 +22,9 @@ class EmbeddingModel:
             n_gpu_layers=-1,
         )
 
+    def embed(self, text: str) -> list:
+        return list(self.llama.embed(text))
+
     def generate(
         self,
         documents: list[Document],
