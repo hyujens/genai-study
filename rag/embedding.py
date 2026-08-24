@@ -8,7 +8,7 @@ from llama_cpp import Llama
 
 from .dataloader.data import Document
 
-BGE_SMALL_1_5 = "bge-small-en-v1.5.Q8_0.gguf"
+BGE_SMALL_1_5 = "bge-small-en-v1.5-q8_0.gguf"
 
 
 class EmbeddingModel:
