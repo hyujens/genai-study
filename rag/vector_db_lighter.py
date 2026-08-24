@@ -132,7 +132,7 @@ class VectorDB:
                 max_elements=self.max_elements,
                 ef_construction=self.ef_construction,
                 M=self.m,
-                allow_replace_delete=True,
+                allow_replace_deleted=True,
             )
             index.set_ef(self.ef)
             self._namespaces[namespace] = _Namespace(index=index)
