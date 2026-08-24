@@ -2,23 +2,30 @@ import json
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
+from enum import Enum
 from pathlib import Path
 
 from llama_cpp import Llama
 
 from .dataloader.data import Document
 
-BGE_SMALL_1_5 = "bge-small-en-v1.5-q8_0.gguf"
+
+class ModelChoice(Enum):
+    BGE_SMALL_1_5 = ("bge-small-en-v1.5-q8_0.gguf", 512)
 
 
 class EmbeddingModel:
-    def __init__(self, model: str) -> None:
-        self.model = model
+    def __init__(self, model: ModelChoice) -> None:
+        self.model = model.value[0]
+
+        supported_ctx_size = model.value[1]
         self.llama = Llama(
-            model_path=(Path.home() / "workspace/models/embeddings" / model).as_posix(),
+            model_path=(
+                Path.home() / "workspace/models/embeddings" / self.model
+            ).as_posix(),
             embedding=True,
             verbose=False,
-            n_ctx=2048,
+            n_ctx=supported_ctx_size,
             n_gpu_layers=-1,
         )
 
