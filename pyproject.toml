@@ -2,6 +2,7 @@
 members = [
     "rag",
     "models",
+    "agent",
 ]
 
 [tool.pytest.ini_options]
