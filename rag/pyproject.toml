@@ -9,6 +9,7 @@ dependencies = [
     "llama-cpp-python>=0.3.35",
     "pymupdf>=1.28.2",
     "requests>=2.34.2",
+    "tiktoken>=0.14.0",
 ]
 
 [dependency-groups]
