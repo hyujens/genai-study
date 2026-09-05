@@ -1,6 +1,9 @@
 import argparse
 
 from agent.role import SystemRole
+from rich.console import Console
+from rich.live import Live
+from rich.markdown import Markdown
 
 from agent import chat
 
@@ -14,14 +17,22 @@ def main():
     llmchat = chat.Agent(SystemRole.Stranger)
     answer = llmchat.inference(args.message)
 
-    for text in answer:
-        print(text, end="", flush=True)
-    print("\n")
+    console = Console()
+    text = ""
+    with Live(Markdown(""), console=console, refresh_per_second=3) as live:
+        for chunk in answer:
+            if chunk:
+                text += chunk
+                live.update(Markdown(text))
 
     if args.debug:
-        print(f"model: {llmchat.get_model()}")
-        print("tractory: ")
-        print(llmchat.get_trajactory())
+        print(f"\n\n\tmodel: {llmchat.get_model()}")
+        print("\ttractory: ")
+        for his in llmchat.get_trajactory():
+            role = his["role"]
+            conent = his["content"]
+            ellipsis = "" if len(conent) < 50 else "..."
+            print(f"\t\t{role}: {his['content'][:50]} {ellipsis}")
 
 
 if __name__ == "__main__":

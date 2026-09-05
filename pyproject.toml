@@ -6,6 +6,7 @@ dependencies = [
     "agent",
     "models",
     "rag",
+    "rich>=15.0.0",
 ]
 
 [dependency-groups]
