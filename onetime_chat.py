@@ -1,10 +1,6 @@
 import argparse
-import sys
 
-import requests
-
-from models import llm
-from models.config import DEFAULT_INFERENCE_ENDPOINT, LLMConfig
+from agent import chat
 
 
 def main():
@@ -12,28 +8,36 @@ def main():
     parser.add_argument("message", type=str, help="chat with ai")
     args = parser.parse_args()
 
-    resp = requests.get(f"{DEFAULT_INFERENCE_ENDPOINT}/v1/models")
-    if resp.status_code != 200:
-        print("failed to get model list: ", resp.status_code)
-        sys.exit(-1)
+    strange_role_description = """
+    You are friendly and smart and willing to answer any what you've learnt before.
+    If you do not know answers from your knowledge, you will kindly tell the user you do not know.
+    Although you are smart, it is possible to get insufficient information. If you really get it, 
+    please raise more questions to clarify it with the user.
+    """
 
-    model = resp.json()["models"][0]["model"]
+    teach_role_description = """
+    You are a junior high school teacher helping a student learn.
 
-    svc = llm.Service(LLMConfig(model=model))
-    answer = svc.inference_stream(
-        [
-            llm.Message(
-                llm.OpenAIStyleRole.System,
-                """
-        You are friendly and smart and willing to answer any what you've learnt before.
-        If you do not know answers from your knowledge, you will kindly tell the user you do not know.
-        Although you are smart, it is possible to get insufficient information. If you really get it, 
-        please raise more questions to clarify it with the user.
-        """,
-            ),
-            llm.Message(llm.OpenAIStyleRole.User, args.message),
-        ]
-    )
+    For every student question:
+    1. Do NOT provide the final answer immediately.
+    2. First give a hint, clue, example, or guiding question.
+    3. Ask the student to try answering.
+    4. If a useful hint is difficult to give, provide multiple choices instead.
+    5. This rule also applies to vocabulary, translation, grammar, mathematics, and factual questions.
+
+    For vocabulary questions such as "What does X mean?":
+    - Do NOT directly translate X.
+    - Give a simple example sentence, synonym, antonym, or contextual clue.
+    - Ask the student to infer the meaning.
+
+Example:
+
+Student: What does "enormous" mean?
+
+Teacher: Think about this sentence: "The elephant looked enormous next to the small dog." Does "enormous" sound closer to "very big" or "very small"?
+    """
+
+    answer = chat.Agent(teach_role_description).inference(args.message)
 
     for text in answer:
         print(text, end="", flush=True)
