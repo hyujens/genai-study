@@ -1,3 +1,26 @@
+[project]
+name = "genai-study"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "agent",
+    "models",
+    "rag",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+agent = { workspace = true }
+models = { workspace = true }
+rag = { workspace = true }
+
 [tool.uv.workspace]
 members = [
     "rag",
@@ -6,4 +29,4 @@ members = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+testpaths = ["rag/tests"]

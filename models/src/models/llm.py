@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import cast
@@ -6,7 +7,6 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
 from .config import LLMConfig
-from collections.abc import Iterator
 
 
 class OpenAIStyleRole(StrEnum):
