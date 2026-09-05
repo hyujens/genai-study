@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import cast
 
 from openai import OpenAI
-from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
+from openai.types.chat import ChatCompletionMessageParam
 
 from .config import LLMConfig
 
