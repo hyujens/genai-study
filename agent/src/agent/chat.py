@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from dataclasses import asdict
 
 import requests
 from models import llm
@@ -19,6 +20,9 @@ class Agent:
 
     def get_model(self) -> str:
         return self.model
+
+    def get_trajactory(self) -> list[dict]:
+        return [asdict(his) for his in self.trajectory]
 
     def inference(self, message: str) -> Iterator[str]:
         self.trajectory.append(llm.Message(llm.OpenAIStyleRole.User, message))
