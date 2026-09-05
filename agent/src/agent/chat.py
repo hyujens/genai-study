@@ -16,7 +16,7 @@ class Agent:
             raise RuntimeError("failed to get models: ", resp.status_code)
 
         self.model = resp.json()["models"][0]["model"]
-        self.llm_service = llm.Service(LLMConfig(model=self.model))
+        self.llm_service = llm.Service(LLMConfig(model=self.model, tools=[]))
 
     def get_model(self) -> str:
         return self.model

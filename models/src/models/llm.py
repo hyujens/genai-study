@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import cast
 
-from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam
+from openai import OpenAI, omit
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolUnionParam
 
 from .config import LLMConfig
 
@@ -25,6 +25,7 @@ class Service:
     def __init__(self, conf: LLMConfig) -> None:
         self.client = OpenAI(base_url=conf.endpoint, api_key=conf.api_key)
         self.model = conf.model
+        self.tools = conf.tools
 
     def inference(self, messages: list[Message]) -> str:
         completion = self.client.chat.completions.create(
@@ -39,6 +40,12 @@ class Service:
                 )
                 for msg in messages
             ],
+            tools=[
+                cast(ChatCompletionToolUnionParam, tool.json_schema())
+                for tool in self.tools
+            ]
+            if self.tools
+            else omit,
         )
         if not completion.choices:
             raise RuntimeError("empty choices from server")
@@ -65,6 +72,12 @@ class Service:
                 )
                 for msg in messages
             ],
+            tools=[
+                cast(ChatCompletionToolUnionParam, tool.json_schema())
+                for tool in self.tools
+            ]
+            if self.tools
+            else omit,
             stream=True,
         )
 
