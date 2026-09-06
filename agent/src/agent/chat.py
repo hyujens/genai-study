@@ -26,12 +26,13 @@ class Agent:
 
     def inference(self, message: str) -> Iterator[str]:
         self.trajectory.append(llm.Message(llm.OpenAIStyleRole.User, message))
-        iter = self.llm_service.inference_stream([self.system_role, *self.trajectory])
+        iter = self.llm_service.do_inference([self.system_role, *self.trajectory])
 
         chunks: list[str] = []
         for words in iter:
-            yield words
-            chunks.append(words)
+            if type(words) is llm.ChatResponse:
+                yield words.chunk
+                chunks.append(words.chunk)
 
         self.trajectory.append(
             llm.Message(llm.OpenAIStyleRole.Assistant, "".join(chunks))
