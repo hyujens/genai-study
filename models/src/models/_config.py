@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from models.tool import FuncDef
+from models._tool import FuncDef
 
 DEFAULT_INFERENCE_ENDPOINT = "http://localhost:8080"
 

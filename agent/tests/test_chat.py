@@ -1,8 +1,8 @@
 from collections.abc import Iterator
 
 import pytest
-from agent.chat import Agent
-from models import llm
+from agent._chat import Agent
+from models import _llm as llm
 
 
 class FakeLLMService:
@@ -28,12 +28,12 @@ def make_agent(
     max_reasoning_steps: int = 10,
 ) -> Agent:
     agent = Agent.__new__(Agent)
-    agent.system_role = llm.Message(llm.OpenAIStyleRole.System, "system")
-    agent.trajectory = []
-    agent.llm_service = service
-    agent.tools = {}
-    agent.max_reasoning_steps = max_reasoning_steps
-    agent.stream = stream
+    agent._system_role = llm.Message(llm.OpenAIStyleRole.System, "system")
+    agent._trajectory = []
+    agent._llm_service = service
+    agent._tools = {}
+    agent._max_reasoning_steps = max_reasoning_steps
+    agent._stream = stream
     return agent
 
 
@@ -44,7 +44,7 @@ def test_inference_forwards_stream_and_records_text_response(stream: bool):
 
     assert list(agent.inference("question")) == ["answer"]
     assert service.stream_values == [stream]
-    assert agent.trajectory == [
+    assert agent._trajectory == [
         llm.Message(llm.OpenAIStyleRole.User, "question"),
         llm.Message(llm.OpenAIStyleRole.Assistant, "answer"),
     ]
@@ -60,23 +60,23 @@ def test_inference_executes_tool_and_continues_to_final_response(stream: bool):
         ]
     )
     agent = make_agent(service, stream=stream)
-    agent.tools["clock"] = lambda tool_call_id: {
+    agent._tools["clock"] = lambda tool_call_id: {
         "tool_call_id": tool_call_id,
         "time": "now",
     }
 
     assert list(agent.inference("question")) == ["final answer"]
     assert service.stream_values == [stream, stream]
-    assert [message.role for message in agent.trajectory] == [
+    assert [message.role for message in agent._trajectory] == [
         llm.OpenAIStyleRole.User,
         llm.OpenAIStyleRole.Assistant,
         llm.OpenAIStyleRole.Tool,
         llm.OpenAIStyleRole.Assistant,
     ]
-    assert agent.trajectory[1].tool_calls == [tool_call]
-    assert agent.trajectory[1].content == ""
-    assert agent.trajectory[2].tool_call_id == "call-1"
-    assert agent.trajectory[3].content == "final answer"
+    assert agent._trajectory[1].tool_calls == [tool_call]
+    assert agent._trajectory[1].content == ""
+    assert agent._trajectory[2].tool_call_id == "call-1"
+    assert agent._trajectory[3].content == "final answer"
 
 
 def test_inference_stops_before_exceeding_max_reasoning_steps():

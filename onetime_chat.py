@@ -1,11 +1,10 @@
 import argparse
 
-from agent.role import SystemRole
 from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
 
-from agent import chat
+from agent import ChatAgent, SystemRole
 
 
 def main():
@@ -14,7 +13,7 @@ def main():
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
-    llmchat = chat.Agent(SystemRole.Stranger)
+    llmchat = ChatAgent(SystemRole.Stranger)
     answer = llmchat.inference(args.message)
 
     console = Console()

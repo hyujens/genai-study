@@ -1,4 +1,4 @@
-from models.tool import FuncDef, ParametertDef
+from models._tool import FuncDef, ParametertDef
 
 
 def test_function_schema_uses_chat_completions_shape():

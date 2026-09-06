@@ -16,7 +16,7 @@ from openai.types.chat import (
     ChatCompletionUserMessageParam,
 )
 
-from .config import LLMConfig
+from ._config import LLMConfig
 
 
 class OpenAIStyleRole(StrEnum):
@@ -57,11 +57,11 @@ InferenceResponse = ChatResponse | ToolCallsResponse
 
 class Service:
     def __init__(self, conf: LLMConfig) -> None:
-        self.client = OpenAI(base_url=conf.endpoint, api_key=conf.api_key)
-        self.model = conf.model
-        self.tools = conf.tools
+        self._client = OpenAI(base_url=conf.endpoint, api_key=conf.api_key)
+        self._model = conf.model
+        self._tools = conf.tools
 
-    def process_response(
+    def _process_response(
         self, completion: ChatCompletion
     ) -> Iterator[InferenceResponse]:
         if not completion.choices:
@@ -91,7 +91,7 @@ class Service:
         yield ChatResponse(content)
         return
 
-    def process_stream_response(
+    def _process_stream_response(
         self, completion: Stream[ChatCompletionChunk]
     ) -> Iterator[InferenceResponse]:
         stream_tool_calls: dict[int, dict[str, list[str]]] = {}
@@ -180,29 +180,29 @@ class Service:
                         )
                     )
         completion: ChatCompletion | Stream[ChatCompletionChunk] = (
-            self.client.chat.completions.create(
-                model=self.model,
+            self._client.chat.completions.create(
+                model=self._model,
                 messages=chat_messages,
                 tools=[
                     cast(ChatCompletionToolUnionParam, tool.json_schema())
-                    for tool in self.tools
+                    for tool in self._tools
                 ]
-                if self.tools
+                if self._tools
                 else omit,
                 stream=stream,
             )
         )
 
         if isinstance(completion, ChatCompletion):
-            return self.process_response(completion)
+            return self._process_response(completion)
         if isinstance(completion, Stream):
-            return self.process_stream_response(completion)
+            return self._process_stream_response(completion)
 
         raise RuntimeError("unknown chat completion type")
 
     def inference(self, messages: list[Message]) -> str:
-        completion = self.client.chat.completions.create(
-            model=self.model,
+        completion = self._client.chat.completions.create(
+            model=self._model,
             messages=[
                 cast(
                     ChatCompletionMessageParam,
@@ -215,9 +215,9 @@ class Service:
             ],
             tools=[
                 cast(ChatCompletionToolUnionParam, tool.json_schema())
-                for tool in self.tools
+                for tool in self._tools
             ]
-            if self.tools
+            if self._tools
             else omit,
         )
         if not completion.choices:
@@ -233,8 +233,8 @@ class Service:
         return message.content
 
     def inference_stream(self, messages: list[Message]) -> Iterator[str]:
-        stream = self.client.chat.completions.create(
-            model=self.model,
+        stream = self._client.chat.completions.create(
+            model=self._model,
             messages=[
                 cast(
                     ChatCompletionMessageParam,
@@ -247,9 +247,9 @@ class Service:
             ],
             tools=[
                 cast(ChatCompletionToolUnionParam, tool.json_schema())
-                for tool in self.tools
+                for tool in self._tools
             ]
-            if self.tools
+            if self._tools
             else omit,
             stream=True,
         )

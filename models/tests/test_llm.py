@@ -1,10 +1,11 @@
 from collections.abc import Iterator
 from typing import Any, cast
 
-from models import llm
-from models.config import LLMConfig
 from openai import Stream
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
+
+from models import _llm as llm
+from models._config import LLMConfig
 
 
 def make_completion(message: dict[str, Any], finish_reason: str) -> ChatCompletion:
@@ -52,7 +53,7 @@ def test_process_response_returns_text():
         finish_reason="stop",
     )
 
-    assert list(service.process_response(completion)) == [llm.ChatResponse("hello")]
+    assert list(service._process_response(completion)) == [llm.ChatResponse("hello")]
 
 
 def test_process_response_returns_complete_tool_calls():
@@ -75,7 +76,7 @@ def test_process_response_returns_complete_tool_calls():
         finish_reason="tool_calls",
     )
 
-    assert list(service.process_response(completion)) == [
+    assert list(service._process_response(completion)) == [
         llm.ToolCallsResponse(
             content="checking",
             tools=(llm.ToolCall("call-1", "get_current_time", "{}"),),
@@ -122,7 +123,7 @@ def test_process_stream_response_merges_interleaved_tool_call_fragments():
     ]
 
     events = list(
-        service.process_stream_response(
+        service._process_stream_response(
             cast(Stream[ChatCompletionChunk], cast(object, iter(chunks)))
         )
     )
@@ -151,7 +152,7 @@ def test_do_inference_serializes_all_message_roles(monkeypatch):
         captured.update(kwargs)
         return completion
 
-    monkeypatch.setattr(service.client.chat.completions, "create", fake_create)
+    monkeypatch.setattr(service._client.chat.completions, "create", fake_create)
     messages = [
         llm.Message(llm.OpenAIStyleRole.System, "system"),
         llm.Message(llm.OpenAIStyleRole.User, "question"),
@@ -201,11 +202,9 @@ def test_do_inference_dispatches_stream_response(monkeypatch):
 
     monkeypatch.setattr(llm, "Stream", FakeStream)
     monkeypatch.setattr(
-        service.client.chat.completions,
+        service._client.chat.completions,
         "create",
         lambda **kwargs: FakeStream(),
     )
 
-    assert list(service.do_inference([], stream=True)) == [
-        llm.ChatResponse("streamed")
-    ]
+    assert list(service.do_inference([], stream=True)) == [llm.ChatResponse("streamed")]

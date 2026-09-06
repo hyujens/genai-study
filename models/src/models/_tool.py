@@ -17,7 +17,7 @@ class FuncDef:
     description: str
     parameters: list[ParametertDef]
 
-    def get_type(self, value_type: type) -> str:
+    def _get_type(self, value_type: type) -> str:
         if value_type is bool:
             return "boolean"
         if value_type is int or value_type is float:
@@ -49,7 +49,7 @@ class FuncDef:
                 required_parameters.append(p.name)
 
             func_def_template["function"]["parameters"]["properties"][p.name] = {
-                "type": self.get_type(p.value_type),
+                "type": self._get_type(p.value_type),
                 "description": p.description,
             }
 
