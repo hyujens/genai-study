@@ -30,4 +30,4 @@ members = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["rag/tests"]
+testpaths = ["rag/tests", "models/tests", "agent/tests"]
