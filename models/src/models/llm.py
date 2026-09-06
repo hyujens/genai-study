@@ -1,14 +1,19 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal, cast
+from typing import cast
 
 from openai import OpenAI, Stream, omit
 from openai.types.chat import (
     ChatCompletion,
+    ChatCompletionAssistantMessageParam,
     ChatCompletionChunk,
+    ChatCompletionMessageFunctionToolCallParam,
     ChatCompletionMessageParam,
+    ChatCompletionSystemMessageParam,
+    ChatCompletionToolMessageParam,
     ChatCompletionToolUnionParam,
+    ChatCompletionUserMessageParam,
 )
 
 from .config import LLMConfig
@@ -18,12 +23,15 @@ class OpenAIStyleRole(StrEnum):
     System = "system"
     User = "user"
     Assistant = "assistant"
+    Tool = "tool"
 
 
 @dataclass
 class Message:
     role: str
     content: str
+    tool_calls: list[ToolCall] | None = None
+    tool_call_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -125,19 +133,56 @@ class Service:
     def do_inference(
         self, messages: list[Message], stream=True
     ) -> Iterator[InferenceResponse]:
+        chat_messages: list[ChatCompletionMessageParam] = []
+        for msg in messages:
+            match msg.role:
+                case "system":
+                    chat_messages.append(
+                        ChatCompletionSystemMessageParam(
+                            content=msg.content, role=msg.role
+                        )
+                    )
+                case "user":
+                    chat_messages.append(
+                        ChatCompletionUserMessageParam(
+                            content=msg.content, role=msg.role
+                        )
+                    )
+                case "assistant":
+                    chat_messages.append(
+                        ChatCompletionAssistantMessageParam(
+                            content=msg.content,
+                            role=msg.role,
+                            tool_calls=[]
+                            if msg.tool_calls is None
+                            else [
+                                ChatCompletionMessageFunctionToolCallParam(
+                                    id=param.id,
+                                    function={
+                                        "arguments": param.arguments,
+                                        "name": param.name,
+                                    },
+                                    type="function",
+                                )
+                                for param in msg.tool_calls
+                            ],
+                        )
+                    )
+                case "tool":
+                    if msg.tool_call_id is None:
+                        raise RuntimeError("tool_call_id should not be empty")
+
+                    chat_messages.append(
+                        ChatCompletionToolMessageParam(
+                            content=msg.content,
+                            role=msg.role,
+                            tool_call_id=msg.tool_call_id,
+                        )
+                    )
         completion: ChatCompletion | Stream[ChatCompletionChunk] = (
             self.client.chat.completions.create(
                 model=self.model,
-                messages=[
-                    cast(
-                        ChatCompletionMessageParam,
-                        {
-                            "role": msg.role,
-                            "content": msg.content,
-                        },
-                    )
-                    for msg in messages
-                ],
+                messages=chat_messages,
                 tools=[
                     cast(ChatCompletionToolUnionParam, tool.json_schema())
                     for tool in self.tools

@@ -36,9 +36,11 @@ class FuncDef:
     def json_schema(self) -> dict:
         func_def_template = {
             "type": "function",
-            "name": self.name,
-            "description": self.description,
-            "parameters": {"type": "object", "properties": {}},
+            "function": {
+                "name": self.name,
+                "description": self.description,
+                "parameters": {"type": "object", "properties": {}},
+            },
         }
 
         required_parameters: list[str] = []
@@ -46,15 +48,19 @@ class FuncDef:
             if p.required:
                 required_parameters.append(p.name)
 
-            func_def_template["parameters"]["properties"][p.name] = {
+            func_def_template["function"]["parameters"]["properties"][p.name] = {
                 "type": self.get_type(p.value_type),
                 "description": p.description,
             }
 
             if len(p.enums):
-                func_def_template["parameters"]["properties"][p.name]["enum"] = p.enums
+                func_def_template["function"]["parameters"]["properties"][p.name][
+                    "enum"
+                ] = p.enums
 
         if required_parameters:
-            func_def_template["parameters"]["required"] = required_parameters
+            func_def_template["function"]["parameters"]["required"] = (
+                required_parameters
+            )
 
         return func_def_template
