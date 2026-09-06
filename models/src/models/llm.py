@@ -148,9 +148,9 @@ class Service:
             )
         )
 
-        if type(completion) is ChatCompletion:
+        if isinstance(completion, ChatCompletion):
             return self.process_response(completion)
-        if type(completion) is Stream[ChatCompletionChunk]:
+        if isinstance(completion, Stream):
             return self.process_stream_response(completion)
 
         raise RuntimeError("unknown chat completion type")
